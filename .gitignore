@@ -1,0 +1,48 @@
+# Python
+*.pyc
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+ENV/
+
+# Django
+db.sqlite3
+db.sqlite3-journal
+*.log
+local_settings.py
+/static/
+/media/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code
+.claude/
+.mcp.json
+
+# UV Lock
+uv.lock
+
+.mcp.json

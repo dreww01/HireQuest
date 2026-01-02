@@ -1,0 +1,31 @@
+{% extends "admin/change_form.html" %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <script>
+    function copyToClipboard(elementId) {
+      const element = document.getElementById(elementId);
+      if (!element) {
+        alert('Element not found');
+        return;
+      }
+
+      // Create a temporary textarea to hold the text
+      const textarea = document.createElement('textarea');
+      textarea.value = element.textContent;
+      document.body.appendChild(textarea);
+
+      // Select and copy the text
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        alert('Copied to clipboard!');
+      } catch (err) {
+        alert('Failed to copy: ' + err);
+      }
+
+      // Remove the temporary textarea
+      document.body.removeChild(textarea);
+    }
+  </script>
+{% endblock %}
