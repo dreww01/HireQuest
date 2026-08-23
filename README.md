@@ -107,13 +107,17 @@ python manage.py run_full_pipeline --skip-boards     # Skip job boards
 # Run server
 python manage.py runserver
 
-# Run tests
+# Run tests (recommended)
+uv run pytest -v
+# or via Django test runner
 python manage.py test
 
 # Database
 python manage.py makemigrations
 python manage.py migrate
 ```
+
+For full contribution guidelines and test details, see [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) and [docs/TESTING.md](docs/TESTING.md).
 
 ## Project Structure
 
@@ -274,6 +278,19 @@ Source.objects.create(
 - **RSS feeds**: Zero scraping risk, intended for consumption
 - **GitHub API**: Official, generous rate limits
 - **Selenium**: Available for JS-heavy sites (not implemented yet)
+
+## Contributing & Architecture Quick-Reference
+
+For complete contribution workflows, branch naming conventions, commit standards, and architecture details, refer to [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).
+
+### Quick Reference
+- **Branch Naming**: `dsh/<issue-id>` (e.g. `dsh/ORC-5`)
+- **Commit Convention**: Conventional Commits (`feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `chore:`)
+- **Run Tests**: `uv run pytest -v`
+- **Documentation**:
+  - [Contributing & Architecture Guide](docs/CONTRIBUTING.md)
+  - [Testing Guide](docs/TESTING.md)
+  - [Production Run Guide](docs/PRODUCTION.md)
 
 ## License
 
