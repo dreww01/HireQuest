@@ -1,88 +1,95 @@
-# Integration tests for external API clients
-# Run: python manage.py test tests.test_integrations
-import os
+# Integration tests for external API clients and scrapers
 from django.test import TestCase
-from django.conf import settings
+from django.utils import timezone
 from unittest.mock import patch, MagicMock
 from datetime import datetime
 
-from integrations.reddit_client import RedditClient
-from integrations.email_client import EmailClient
+from integrations.github_scraper import GitHubScraper
+from integrations.rss_scraper import RSSJobScraper
+from integrations.remoteok_scraper import RemoteOKScraper
+from integrations.weworkremotely_scraper import WeWorkRemotelyScraper
 from integrations.huggingface_client import HuggingFaceClient
 from integrations.telegram_client import TelegramClient
 from core.models import JobPost, Source
 
 
-class RedditClientTest(TestCase):
-    # Test Reddit API integration
+class GitHubScraperTest(TestCase):
+    # Test GitHub Issues scraper
 
-    def setUp(self):
-        self.source = Source.objects.create(
-            type=Source.REDDIT,
-            identifier='forhire',
-            is_active=True
+    @patch('requests.Session.get')
+    def test_search_issues(self, mock_get):
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            'items': [
+                {
+                    'id': 101,
+                    'title': 'Paid Django bug fix opportunity',
+                    'body': 'Looking for a Django developer. Budget $500.',
+                    'html_url': 'https://github.com/org/repo/issues/1',
+                    'created_at': '2026-01-01T00:00:00Z',
+                    'user': {'login': 'testdev'},
+                    'labels': [{'name': 'help wanted'}, {'name': 'python'}],
+                    'repository_url': 'https://api.github.com/repos/org/repo',
+                }
+            ]
+        }
+        mock_get.return_value = mock_response
+
+        scraper = GitHubScraper(github_token=None)
+        results = scraper.search_issues(keywords=['paid'], limit=1)
+
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]['id'], 'github_101')
+        self.assertIn('Django', results[0]['title'])
+
+
+class RSSJobScraperTest(TestCase):
+    # Test RSS scraper
+
+    @patch('requests.Session.get')
+    @patch('feedparser.parse')
+    def test_scrape_listings(self, mock_parse, mock_get):
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.content = b'<rss></rss>'
+        mock_get.return_value = mock_response
+
+        mock_parse.return_value = MagicMock(
+            bozo=0,
+            entries=[
+                {
+                    'id': 'https://remoteok.com/remote-jobs/101',
+                    'link': 'https://remoteok.com/remote-jobs/101',
+                    'title': 'Remote Python Developer at TechCorp',
+                    'summary': 'We need a remote Python/Django engineer.',
+                    'published_parsed': (2026, 1, 1, 0, 0, 0, 3, 1, 0),
+                    'tags': [{'term': 'python'}, {'term': 'django'}],
+                }
+            ]
         )
 
-    @patch('praw.Reddit')
-    def test_reddit_connection(self, mock_reddit):
-        # Test Reddit client can connect and fetch posts
-        # Mock PRAW response
-        mock_submission = MagicMock()
-        mock_submission.id = 'test123'
-        mock_submission.title = 'Test Job Post'
-        mock_submission.selftext = 'Job description'
-        mock_submission.author.name = 'testuser'
-        mock_submission.url = 'https://reddit.com/test'
-        mock_submission.created_utc = datetime.now().timestamp()
+        scraper = RSSJobScraper(feed_url='https://remoteok.com/remote-jobs.rss', board_name='remoteok')
+        results = scraper.scrape_listings(limit=1, keywords=['python'])
 
-        mock_subreddit = MagicMock()
-        mock_subreddit.new.return_value = [mock_submission]
-        mock_reddit.return_value.subreddit.return_value = mock_subreddit
-
-        client = RedditClient()
-        posts = client.fetch_recent_posts('forhire', limit=1)
-
-        self.assertEqual(len(posts), 1)
-        self.assertEqual(posts[0]['title'], 'Test Job Post')
-        self.assertEqual(posts[0]['id'], 'test123')
-
-
-class EmailClientTest(TestCase):
-    # Test Email IMAP integration
-
-    @patch('imaplib.IMAP4_SSL')
-    def test_email_connection(self, mock_imap):
-        # Test email client can connect to IMAP server
-        mock_mail = MagicMock()
-        mock_imap.return_value = mock_mail
-        mock_mail.select.return_value = ('OK', [b'1'])
-        mock_mail.search.return_value = ('OK', [b''])
-
-        client = EmailClient()
-        emails = client.fetch_recent_emails(limit=1)
-
-        self.assertIsInstance(emails, list)
-        mock_mail.login.assert_called_once()
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]['title'], 'Remote Python Developer at TechCorp')
 
 
 class HuggingFaceClientTest(TestCase):
     # Test HuggingFace AI API integration
 
-    @patch('requests.post')
-    def test_huggingface_connection(self, mock_post):
-        # Test HuggingFace API can classify job quality
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = [{
-            'generated_text': 'Classification: HIGH\nConfidence: 0.95\nReasoning: Test reasoning'
-        }]
-        mock_post.return_value = mock_response
-
+    @patch.object(HuggingFaceClient, '__init__', lambda self: None)
+    def test_huggingface_query(self):
         client = HuggingFaceClient()
-        result = client.classify_job_quality('Test job post', 'Test description')
+        client.client = MagicMock()
+        client.model = 'meta-llama/Llama-3.2-1B-Instruct'
+        mock_choice = MagicMock()
+        mock_choice.message.content = 'IS_JOB_SIGNAL: YES\nCONFIDENCE: 95\nREASONING: Legitimate Django post'
+        client.client.chat_completion.return_value = MagicMock(choices=[mock_choice])
 
-        self.assertIn('classification', result)
-        self.assertIn('confidence', result)
+        response = client.query('Analyze this job')
+        self.assertIn('IS_JOB_SIGNAL: YES', response)
 
 
 class TelegramClientTest(TestCase):
@@ -90,8 +97,8 @@ class TelegramClientTest(TestCase):
 
     def setUp(self):
         self.source = Source.objects.create(
-            type=Source.REDDIT,
-            identifier='test',
+            type=Source.JOB_BOARD,
+            identifier='remoteok',
             is_active=True
         )
         self.job = JobPost.objects.create(
@@ -101,19 +108,13 @@ class TelegramClientTest(TestCase):
             body='Test body',
             author='testuser',
             url='https://example.com',
-            timestamp=datetime.now()
+            timestamp=timezone.now()
         )
 
-    @patch('requests.post')
-    def test_telegram_send_message(self, mock_post):
-        # Test Telegram bot can send alerts
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {'ok': True, 'result': {'message_id': 123}}
-        mock_post.return_value = mock_response
-
+    @patch.object(TelegramClient, '__init__', lambda self: None)
+    def test_telegram_escape_markdown(self):
         client = TelegramClient()
-        message_id = client.send_simple_alert(self.job)
-
-        self.assertEqual(message_id, 123)
-        mock_post.assert_called_once()
+        escaped = client._escape_markdown('Test_message*with[markdown]')
+        self.assertIn('\\_', escaped)
+        self.assertIn('\\*', escaped)
+        self.assertIn('\\[', escaped)
