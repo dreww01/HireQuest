@@ -282,4 +282,5 @@ Expected run times for standard scraping cycles (`--limit 20`):
 
 **Related Documentation:**
 - [Main README](../README.md) — System architecture, setup, and overview.
+- [Architecture Guide](ARCHITECTURE.md) — System architecture, ERD, and component design.
 - [Production Guide](PRODUCTION.md) — Production operations and automated scheduling.

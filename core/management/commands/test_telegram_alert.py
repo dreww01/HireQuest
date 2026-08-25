@@ -19,7 +19,7 @@ class Command(BaseCommand):
             client = TelegramClient()
 
             # Create test job (not persisted to DB)
-            test_source = Source(type=Source.REDDIT, identifier='test')
+            test_source = Source(type=Source.GITHUB_ISSUE, identifier='test')
             test_job = JobPost(
                 source=test_source,
                 title='Test Job: Python Developer Needed',

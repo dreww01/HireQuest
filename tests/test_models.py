@@ -10,27 +10,39 @@ from core.models import Source, JobPost, QualificationScore, AlertStatus, DraftM
 class SourceModelTest(TestCase):
     # Test Source model
 
-    def test_create_reddit_source(self):
-        # Test creating a Reddit source
+    def test_create_github_source(self):
+        # Test creating a GitHub source
         source = Source.objects.create(
-            type=Source.REDDIT,
-            identifier='forhire',
-            name='ForHire Subreddit',
+            type=Source.GITHUB_ISSUE,
+            identifier='github_search',
+            name='GitHub Issues Search',
             is_active=True
         )
-        self.assertEqual(source.type, Source.REDDIT)
-        self.assertEqual(source.identifier, 'forhire')
+        self.assertEqual(source.type, Source.GITHUB_ISSUE)
+        self.assertEqual(source.identifier, 'github_search')
         self.assertTrue(source.is_active)
 
-    def test_create_newsletter_source(self):
-        # Test creating a newsletter source
+    def test_create_rss_source(self):
+        # Test creating an RSS source
         source = Source.objects.create(
-            type=Source.NEWSLETTER,
-            identifier='noreply@job-board.com',
-            name='Job Board Newsletter',
+            type=Source.RSS_FEED,
+            identifier='remoteok',
+            name='RemoteOK RSS Feed',
+            base_url='https://remoteok.com/remote-jobs.rss',
             is_active=True
         )
-        self.assertEqual(source.type, Source.NEWSLETTER)
+        self.assertEqual(source.type, Source.RSS_FEED)
+
+    def test_create_job_board_source(self):
+        # Test creating a Job Board source
+        source = Source.objects.create(
+            type=Source.JOB_BOARD,
+            identifier='weworkremotely',
+            name='We Work Remotely',
+            base_url='https://weworkremotely.com',
+            is_active=True
+        )
+        self.assertEqual(source.type, Source.JOB_BOARD)
 
 
 class JobPostModelTest(TestCase):
@@ -38,8 +50,8 @@ class JobPostModelTest(TestCase):
 
     def setUp(self):
         self.source = Source.objects.create(
-            type=Source.REDDIT,
-            identifier='forhire',
+            type=Source.GITHUB_ISSUE,
+            identifier='github_search',
             is_active=True
         )
 
@@ -47,11 +59,11 @@ class JobPostModelTest(TestCase):
         # Test creating a job post
         job = JobPost.objects.create(
             source=self.source,
-            external_id='reddit_123',
+            external_id='github_123',
             title='Django Developer Needed',
             body='We need a Django developer',
             author='hiring_manager',
-            url='https://reddit.com/r/forhire/123',
+            url='https://github.com/example/repo/issues/123',
             timestamp=timezone.now()
         )
         self.assertEqual(job.status, JobPost.NEW)
@@ -61,7 +73,7 @@ class JobPostModelTest(TestCase):
         # Test job post status changes
         job = JobPost.objects.create(
             source=self.source,
-            external_id='reddit_456',
+            external_id='github_456',
             title='Test Job',
             body='Test',
             author='test',
@@ -85,8 +97,8 @@ class QualificationScoreModelTest(TestCase):
 
     def setUp(self):
         self.source = Source.objects.create(
-            type=Source.REDDIT,
-            identifier='forhire',
+            type=Source.GITHUB_ISSUE,
+            identifier='github_search',
             is_active=True
         )
         self.job = JobPost.objects.create(
@@ -129,8 +141,8 @@ class AlertStatusModelTest(TestCase):
 
     def setUp(self):
         self.source = Source.objects.create(
-            type=Source.REDDIT,
-            identifier='forhire',
+            type=Source.GITHUB_ISSUE,
+            identifier='github_search',
             is_active=True
         )
         self.job = JobPost.objects.create(
@@ -153,3 +165,4 @@ class AlertStatusModelTest(TestCase):
         self.assertEqual(alert.telegram_message_id, '12345')
         self.assertEqual(alert.job_post, self.job)
         self.assertFalse(alert.acknowledged)
+
