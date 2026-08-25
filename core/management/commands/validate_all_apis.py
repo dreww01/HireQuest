@@ -1,7 +1,6 @@
-from datetime import datetime
-
 from django.conf import settings
 from django.core.management.base import BaseCommand
+from django.utils import timezone
 
 from core.models import JobPost, Source
 from integrations.github_scraper import GitHubScraper
@@ -70,7 +69,7 @@ class Command(BaseCommand):
                 body='This is an automated test message from the HireQuest API validator.',
                 author='ValidationBot',
                 url='https://example.com/test',
-                timestamp=datetime.now(),
+                timestamp=timezone.now(),
             )
 
             message_id = client.send_simple_alert(test_job)
