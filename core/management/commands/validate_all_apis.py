@@ -1,5 +1,5 @@
 from datetime import datetime
-import sys
+
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
@@ -7,7 +7,6 @@ from core.models import JobPost, Source
 from integrations.github_scraper import GitHubScraper
 from integrations.huggingface_client import HuggingFaceClient
 from integrations.telegram_client import TelegramClient
-from utils.validators import check_optional_service
 
 
 class Command(BaseCommand):
