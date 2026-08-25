@@ -166,3 +166,92 @@ class AlertStatusModelTest(TestCase):
         self.assertEqual(alert.job_post, self.job)
         self.assertFalse(alert.acknowledged)
 
+
+class DraftMessageModelTest(TestCase):
+    # Test DraftMessage model
+
+    def setUp(self):
+        self.source = Source.objects.create(
+            type=Source.GITHUB_ISSUE,
+            identifier='github_search',
+            is_active=True
+        )
+        self.job = JobPost.objects.create(
+            source=self.source,
+            external_id='test_draft_001',
+            title='Python Backend Engineer',
+            body='Looking for a backend dev',
+            author='recruiter',
+            url='https://example.com/job/1',
+            timestamp=timezone.now()
+        )
+
+    def test_create_draft_message(self):
+        # Test creating a draft message
+        draft = DraftMessage.objects.create(
+            job_post=self.job,
+            content='Hi, I am interested in this role.',
+            platform=DraftMessage.GITHUB_COMMENT,
+            cover_letter='Dear Hiring Manager...'
+        )
+        self.assertEqual(draft.job_post, self.job)
+        self.assertEqual(draft.content, 'Hi, I am interested in this role.')
+        self.assertEqual(draft.platform, DraftMessage.GITHUB_COMMENT)
+        self.assertEqual(draft.cover_letter, 'Dear Hiring Manager...')
+        self.assertIsNotNone(draft.created_at)
+
+    def test_draft_message_field_defaults(self):
+        # Test field defaults for optional fields
+        draft = DraftMessage.objects.create(
+            job_post=self.job,
+            content='Short message',
+            platform=DraftMessage.DIRECT_MESSAGE
+        )
+        self.assertEqual(draft.cover_letter, '')
+
+    def test_draft_message_str(self):
+        # Test string representation
+        draft = DraftMessage.objects.create(
+            job_post=self.job,
+            content='Hello',
+            platform=DraftMessage.COVER_LETTER
+        )
+        self.assertEqual(str(draft), f"Draft for: {self.job.title}")
+
+    def test_draft_message_platform_choices(self):
+        # Test platform choices
+        for choice_code, _ in DraftMessage.PLATFORM_CHOICES:
+            job = JobPost.objects.create(
+                source=self.source,
+                external_id=f'test_choice_{choice_code}',
+                title='Job',
+                body='Desc',
+                author='author',
+                url='https://example.com',
+                timestamp=timezone.now()
+            )
+            draft = DraftMessage.objects.create(
+                job_post=job,
+                content='Test content',
+                platform=choice_code
+            )
+            self.assertEqual(draft.platform, choice_code)
+
+    def test_draft_message_one_to_one_relationship(self):
+        # Test OneToOne relationship with JobPost
+        draft = DraftMessage.objects.create(
+            job_post=self.job,
+            content='Original draft',
+            platform=DraftMessage.GITHUB_COMMENT
+        )
+        self.assertEqual(self.job.draft, draft)
+
+        from django.db import IntegrityError
+        with self.assertRaises(IntegrityError):
+            DraftMessage.objects.create(
+                job_post=self.job,
+                content='Duplicate draft',
+                platform=DraftMessage.DIRECT_MESSAGE
+            )
+
+
