@@ -54,11 +54,8 @@ SECRET_KEY=your-production-secret-key
 DEBUG=False
 ALLOWED_HOSTS=localhost,127.0.0.1
 
-# --- Email Integration (IMAP) ---
-EMAIL_HOST=imap.gmail.com
-EMAIL_PORT=993
-EMAIL_ADDRESS=your-email@gmail.com
-EMAIL_PASSWORD=your-gmail-app-password
+# --- GitHub API (Optional: increases rate limit from 60 to 5,000 req/hr) ---
+GITHUB_TOKEN=ghp_your_actual_github_token
 
 # --- Hugging Face AI Qualification ---
 HUGGINGFACE_API_KEY=hf_your_actual_api_key
@@ -79,11 +76,10 @@ LOG_LEVEL=INFO
 
 ### 2. Obtaining Credentials
 
-#### Gmail App Password Setup
-1. Enable 2-Factor Authentication on your Google Account: [Google Security Settings](https://myaccount.google.com/security).
-2. Generate an App Password: [Google App Passwords](https://myaccount.google.com/apppasswords).
-3. Set the app type to **Mail** and device to your workstation.
-4. Copy the generated 16-character token to `EMAIL_PASSWORD` in `.env`.
+#### GitHub Personal Access Token (Optional)
+1. Navigate to [GitHub Developer Settings](https://github.com/settings/tokens).
+2. Generate a classic or fine-grained token with `public_repo` scope.
+3. Copy the token to `GITHUB_TOKEN` in `.env` (increases API rate limit from 60 to 5,000 req/hr).
 
 #### Telegram Bot Setup
 1. Message [@BotFather](https://t.me/botfather) on Telegram.
@@ -248,9 +244,9 @@ python manage.py create_test_job
 
 ## 🛠️ Troubleshooting Common Production Issues
 
-### Email / IMAP Authentication Failure
-- Verify you are using a 16-character **Google App Password**, not your primary password.
-- Verify `EMAIL_HOST=imap.gmail.com` and `EMAIL_PORT=993`.
+### GitHub API Rate Limit Exceeded
+- Unauthenticated requests are capped at 60 requests per hour.
+- Add a valid `GITHUB_TOKEN` to `.env` to increase the limit to 5,000 requests per hour.
 
 ### Hugging Face API Errors or Timeouts
 - The first API request will encounter cold-start latency (30–60s) as model weights load.
