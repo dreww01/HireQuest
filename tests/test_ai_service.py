@@ -1,9 +1,8 @@
 # Tests for AI service and signal detection
-from django.utils import timezone
 from unittest.mock import MagicMock, patch
 
-from django.conf import settings
 from django.test import TestCase
+from django.utils import timezone
 
 from core.models import DraftMessage, JobPost, QualificationScore, Source
 from utils.ai_service import detect_job_signal, generate_draft_message, qualify_job
