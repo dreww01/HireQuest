@@ -279,6 +279,10 @@ Source.objects.create(
 
 MIT License
 
+## DSH Temporal Smoke Test
+
+This repository can be used to verify the DSH automated builder pipeline.
+
 ## Roadmap
 
 **v1.0 (Current):**
