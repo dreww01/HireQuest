@@ -4,9 +4,9 @@ Test Telegram integration by sending a test alert
 Usage: python manage.py test_telegram_alert
 """
 from django.core.management.base import BaseCommand
-from django.utils import timezone
 from integrations.telegram_client import TelegramClient
 from core.models import JobPost, Source
+from datetime import datetime
 
 
 class Command(BaseCommand):
@@ -19,14 +19,14 @@ class Command(BaseCommand):
             client = TelegramClient()
 
             # Create test job (not persisted to DB)
-            test_source = Source(type=Source.GITHUB_ISSUE, identifier='test')
+            test_source = Source(type=Source.REDDIT, identifier='test')
             test_job = JobPost(
                 source=test_source,
                 title='Test Job: Python Developer Needed',
                 body='This is a test job posting to verify Telegram integration.',
                 author='TestBot',
                 url='https://example.com',
-                timestamp=timezone.now()
+                timestamp=datetime.now()
             )
 
             message_id = client.send_simple_alert(test_job)

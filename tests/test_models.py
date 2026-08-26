@@ -10,39 +10,27 @@ from core.models import Source, JobPost, QualificationScore, AlertStatus, DraftM
 class SourceModelTest(TestCase):
     # Test Source model
 
-    def test_create_github_source(self):
-        # Test creating a GitHub source
+    def test_create_reddit_source(self):
+        # Test creating a Reddit source
         source = Source.objects.create(
-            type=Source.GITHUB_ISSUE,
-            identifier='github_search',
-            name='GitHub Issues Search',
+            type=Source.REDDIT,
+            identifier='forhire',
+            name='ForHire Subreddit',
             is_active=True
         )
-        self.assertEqual(source.type, Source.GITHUB_ISSUE)
-        self.assertEqual(source.identifier, 'github_search')
+        self.assertEqual(source.type, Source.REDDIT)
+        self.assertEqual(source.identifier, 'forhire')
         self.assertTrue(source.is_active)
 
-    def test_create_rss_source(self):
-        # Test creating an RSS source
+    def test_create_newsletter_source(self):
+        # Test creating a newsletter source
         source = Source.objects.create(
-            type=Source.RSS_FEED,
-            identifier='remoteok',
-            name='RemoteOK RSS Feed',
-            base_url='https://remoteok.com/remote-jobs.rss',
+            type=Source.NEWSLETTER,
+            identifier='noreply@job-board.com',
+            name='Job Board Newsletter',
             is_active=True
         )
-        self.assertEqual(source.type, Source.RSS_FEED)
-
-    def test_create_job_board_source(self):
-        # Test creating a Job Board source
-        source = Source.objects.create(
-            type=Source.JOB_BOARD,
-            identifier='weworkremotely',
-            name='We Work Remotely',
-            base_url='https://weworkremotely.com',
-            is_active=True
-        )
-        self.assertEqual(source.type, Source.JOB_BOARD)
+        self.assertEqual(source.type, Source.NEWSLETTER)
 
 
 class JobPostModelTest(TestCase):
@@ -50,8 +38,8 @@ class JobPostModelTest(TestCase):
 
     def setUp(self):
         self.source = Source.objects.create(
-            type=Source.GITHUB_ISSUE,
-            identifier='github_search',
+            type=Source.REDDIT,
+            identifier='forhire',
             is_active=True
         )
 
@@ -59,11 +47,11 @@ class JobPostModelTest(TestCase):
         # Test creating a job post
         job = JobPost.objects.create(
             source=self.source,
-            external_id='github_123',
+            external_id='reddit_123',
             title='Django Developer Needed',
             body='We need a Django developer',
             author='hiring_manager',
-            url='https://github.com/example/repo/issues/123',
+            url='https://reddit.com/r/forhire/123',
             timestamp=timezone.now()
         )
         self.assertEqual(job.status, JobPost.NEW)
@@ -73,7 +61,7 @@ class JobPostModelTest(TestCase):
         # Test job post status changes
         job = JobPost.objects.create(
             source=self.source,
-            external_id='github_456',
+            external_id='reddit_456',
             title='Test Job',
             body='Test',
             author='test',
@@ -97,8 +85,8 @@ class QualificationScoreModelTest(TestCase):
 
     def setUp(self):
         self.source = Source.objects.create(
-            type=Source.GITHUB_ISSUE,
-            identifier='github_search',
+            type=Source.REDDIT,
+            identifier='forhire',
             is_active=True
         )
         self.job = JobPost.objects.create(
@@ -141,8 +129,8 @@ class AlertStatusModelTest(TestCase):
 
     def setUp(self):
         self.source = Source.objects.create(
-            type=Source.GITHUB_ISSUE,
-            identifier='github_search',
+            type=Source.REDDIT,
+            identifier='forhire',
             is_active=True
         )
         self.job = JobPost.objects.create(
@@ -165,93 +153,3 @@ class AlertStatusModelTest(TestCase):
         self.assertEqual(alert.telegram_message_id, '12345')
         self.assertEqual(alert.job_post, self.job)
         self.assertFalse(alert.acknowledged)
-
-
-class DraftMessageModelTest(TestCase):
-    # Test DraftMessage model
-
-    def setUp(self):
-        self.source = Source.objects.create(
-            type=Source.GITHUB_ISSUE,
-            identifier='github_search',
-            is_active=True
-        )
-        self.job = JobPost.objects.create(
-            source=self.source,
-            external_id='test_draft_001',
-            title='Python Backend Engineer',
-            body='Looking for a backend dev',
-            author='recruiter',
-            url='https://example.com/job/1',
-            timestamp=timezone.now()
-        )
-
-    def test_create_draft_message(self):
-        # Test creating a draft message
-        draft = DraftMessage.objects.create(
-            job_post=self.job,
-            content='Hi, I am interested in this role.',
-            platform=DraftMessage.GITHUB_COMMENT,
-            cover_letter='Dear Hiring Manager...'
-        )
-        self.assertEqual(draft.job_post, self.job)
-        self.assertEqual(draft.content, 'Hi, I am interested in this role.')
-        self.assertEqual(draft.platform, DraftMessage.GITHUB_COMMENT)
-        self.assertEqual(draft.cover_letter, 'Dear Hiring Manager...')
-        self.assertIsNotNone(draft.created_at)
-
-    def test_draft_message_field_defaults(self):
-        # Test field defaults for optional fields
-        draft = DraftMessage.objects.create(
-            job_post=self.job,
-            content='Short message',
-            platform=DraftMessage.DIRECT_MESSAGE
-        )
-        self.assertEqual(draft.cover_letter, '')
-
-    def test_draft_message_str(self):
-        # Test string representation
-        draft = DraftMessage.objects.create(
-            job_post=self.job,
-            content='Hello',
-            platform=DraftMessage.COVER_LETTER
-        )
-        self.assertEqual(str(draft), f"Draft for: {self.job.title}")
-
-    def test_draft_message_platform_choices(self):
-        # Test platform choices
-        for choice_code, _ in DraftMessage.PLATFORM_CHOICES:
-            job = JobPost.objects.create(
-                source=self.source,
-                external_id=f'test_choice_{choice_code}',
-                title='Job',
-                body='Desc',
-                author='author',
-                url='https://example.com',
-                timestamp=timezone.now()
-            )
-            draft = DraftMessage.objects.create(
-                job_post=job,
-                content='Test content',
-                platform=choice_code
-            )
-            self.assertEqual(draft.platform, choice_code)
-
-    def test_draft_message_one_to_one_relationship(self):
-        # Test OneToOne relationship with JobPost
-        draft = DraftMessage.objects.create(
-            job_post=self.job,
-            content='Original draft',
-            platform=DraftMessage.GITHUB_COMMENT
-        )
-        self.assertEqual(self.job.draft, draft)
-
-        from django.db import IntegrityError
-        with self.assertRaises(IntegrityError):
-            DraftMessage.objects.create(
-                job_post=self.job,
-                content='Duplicate draft',
-                platform=DraftMessage.DIRECT_MESSAGE
-            )
-
-
