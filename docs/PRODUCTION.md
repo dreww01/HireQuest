@@ -273,5 +273,6 @@ python manage.py create_test_job
 
 **Related Documentation:**
 - [Main README](../README.md) — Architectural overview, feature matrix, and setup.
+- [API & Testing Reference](API.md) — Exhaustive specification for external/internal APIs and tests.
 - [Architecture Guide](ARCHITECTURE.md) — System architecture, ERD, and component design.
 - [Testing Guide](TESTING.md) — Unit and integration test workflows.

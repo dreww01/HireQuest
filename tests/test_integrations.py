@@ -132,6 +132,101 @@ class HuggingFaceClientTest(TestCase):
 
         self.assertIn('IS_JOB_SIGNAL: YES', result)
 
+    @patch('integrations.huggingface_client.validate_huggingface_credentials')
+    @patch('integrations.huggingface_client.InferenceClient')
+    def test_test_connection(self, mock_client_cls, mock_validate):
+        mock_client = MagicMock()
+        mock_choice = MagicMock()
+        mock_choice.message.content = 'Connection successful'
+        mock_response = MagicMock(choices=[mock_choice])
+        mock_client.chat_completion.return_value = mock_response
+        mock_client_cls.return_value = mock_client
+
+        with patch.object(settings, 'HUGGINGFACE_API_KEY', 'hf_test_key'):
+            client = HuggingFaceClient()
+            self.assertTrue(client.test_connection())
+
+    @patch('integrations.huggingface_client.validate_huggingface_credentials')
+    @patch('integrations.huggingface_client.InferenceClient')
+    def test_analyze_job_relevance(self, mock_client_cls, mock_validate):
+        mock_client = MagicMock()
+        mock_choice = MagicMock()
+        mock_choice.message.content = 'RELEVANT: YES\nCONFIDENCE: 85\nREASON: Matches Python stack'
+        mock_response = MagicMock(choices=[mock_choice])
+        mock_client.chat_completion.return_value = mock_response
+        mock_client_cls.return_value = mock_client
+
+        job = JobPost(
+            title='Django Backend Developer',
+            body='Python and Django expertise required',
+            author='recruiter',
+        )
+
+        with patch.object(settings, 'HUGGINGFACE_API_KEY', 'hf_test_key'):
+            client = HuggingFaceClient()
+            analysis = client.analyze_job_relevance(job)
+
+        self.assertTrue(analysis['is_relevant'])
+        self.assertAlmostEqual(analysis['confidence'], 0.85)
+
+    @patch('integrations.huggingface_client.validate_huggingface_credentials')
+    @patch('integrations.huggingface_client.InferenceClient')
+    def test_generate_draft_message(self, mock_client_cls, mock_validate):
+        mock_client = MagicMock()
+        mock_choice = MagicMock()
+        mock_choice.message.content = 'Hello, I would love to work on this Django project.'
+        mock_response = MagicMock(choices=[mock_choice])
+        mock_client.chat_completion.return_value = mock_response
+        mock_client_cls.return_value = mock_client
+
+        job = JobPost(
+            title='Django Backend Developer',
+            body='Python and Django expertise required',
+            author='recruiter',
+        )
+
+        with patch.object(settings, 'HUGGINGFACE_API_KEY', 'hf_test_key'):
+            client = HuggingFaceClient()
+            draft = client.generate_draft_message(job, {'skills': 'Python, Django'})
+
+        self.assertIn('Django project', draft)
+
+
+class WeWorkRemotelyScraperTest(TestCase):
+    # Test We Work Remotely scraper integration
+
+    @patch('integrations.base_scraper.BaseScraper.fetch_html')
+    def test_scrape_listings(self, mock_fetch):
+        from bs4 import BeautifulSoup
+        from integrations.weworkremotely_scraper import WeWorkRemotelyScraper
+
+        html_content = '''
+        <ul>
+            <li class="feature">
+                <a href="/remote-jobs/123-django-developer">
+                    <span class="company">Remote Corp</span>
+                    <span class="title">Senior Django Dev</span>
+                    <span class="region">USA Only</span>
+                </a>
+            </li>
+        </ul>
+        '''
+        mock_fetch.return_value = BeautifulSoup(html_content, 'html.parser')
+
+        scraper = WeWorkRemotelyScraper()
+        with patch.object(scraper, 'scrape_job_detail') as mock_detail:
+            mock_detail.return_value = {
+                'body': 'Looking for Python and Django engineer',
+                'skills_tags': 'python,django',
+                'timestamp': timezone.now(),
+            }
+            jobs = scraper.scrape_listings(limit=1)
+
+        self.assertEqual(len(jobs), 1)
+        self.assertEqual(jobs[0]['title'], 'Senior Django Dev')
+        self.assertEqual(jobs[0]['company_name'], 'Remote Corp')
+        self.assertIn('django', jobs[0]['skills_tags'])
+
 
 class TelegramClientTest(TestCase):
     # Test Telegram Bot API integration

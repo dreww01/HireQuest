@@ -147,6 +147,7 @@ hirequest/
 │   ├── validators.py                # Credential and input validators
 │   └── exceptions.py                # Domain-specific exception definitions
 ├── docs/                            # In-depth guides
+│   ├── API.md                       # Complete API and test suite reference
 │   ├── ARCHITECTURE.md              # Detailed system architecture and design specification
 │   ├── PRODUCTION.md                # Production setup and operations guide
 │   └── TESTING.md                   # Comprehensive testing guide

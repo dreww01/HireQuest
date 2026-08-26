@@ -480,5 +480,6 @@ To dispatch alerts to Discord, Slack, or Email in addition to Telegram:
 
 **Related Documentation:**
 - [Main Project README](../README.md) — Quick start, setup instructions, and CLI command reference.
+- [API & Testing Reference](API.md) — Exhaustive specification for external/internal APIs and tests.
 - [Production Run Guide](PRODUCTION.md) — Production operations, scheduling, and logging.
 - [Testing Guide](TESTING.md) — Scraper validation matrices and test suite workflows.
