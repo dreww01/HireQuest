@@ -5,8 +5,15 @@
 
 ---
 
+## DSH Temporal Smoke Test
+
+This repository can be used to verify the DSH automated builder pipeline.
+
+---
+
 ## 📑 Table of Contents
 
+- [DSH Temporal Smoke Test](#dsh-temporal-smoke-test)
 - [Overview](#-overview)
 - [Key Features](#-key-features)
 - [Tech Stack](#-tech-stack)
