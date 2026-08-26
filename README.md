@@ -2,6 +2,10 @@
 
 Automated job hunting system that scrapes job boards and GitHub for opportunities, uses AI to qualify them, and sends Telegram alerts.
 
+## DSH Temporal Smoke Test
+
+This repository can be used to verify the DSH automated builder pipeline.
+
 ## Features
 
 - 🔍 **Multi-Source Scraping**: GitHub Issues, RemoteOK, We Work Remotely, RSS feeds
